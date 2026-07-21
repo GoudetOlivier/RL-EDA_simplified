@@ -4,6 +4,7 @@ import datetime
 import torch
 import os
 import random
+import math
 
 from eda_strategies.FactoryStrategyEA import FactoryStrategyEA
 
@@ -35,9 +36,14 @@ if __name__ == '__main__':
 
     # Generator parameters
     parser.add_argument('--lambda_', type=int, default=10, help='lambda : size pop EDA')
-    parser.add_argument('--numberHiddenLayersG', type=int, default=2, help='number of hidden layers in the generator')
+    parser.add_argument('--numberHiddenLayersG', type=int, default=-1, help='number of hidden layers in the generator')
     parser.add_argument('--nh', type=int, default=100, help='number of neurons in each hidden layer of the generator')
+    parser.add_argument('--activation', type=str, default="relu", help='activation function in generator')
+     
     parser.add_argument('--epsilon', type=float, default=0.001, help='probability threshold')
+
+
+
 
     # RL options
     parser.add_argument('--beta', type=float, default=1, help='beta : KL coefficient')
@@ -62,13 +68,18 @@ if __name__ == '__main__':
     lambda_ = args.lambda_
     verbose = args.verbose
     budget = args.budget
-    numberHiddenLayersG = args.numberHiddenLayersG
-    nh = args.nh
     beta = args.beta
     nb_train = args.nb_train
     epsilon = args.epsilon
     learning_rate = args.learning_rate
     typeStrategy = args.type_strategy
+    activation = args.activation
+    
+    numberHiddenLayersG = args.numberHiddenLayersG
+    nh = args.nh
+
+ 
+
 
     mu = args.mu
     rho = args.rho
@@ -93,10 +104,6 @@ if __name__ == '__main__':
 
     pathResult = "results/" + typeStrategy + "/" + type_problem + "/" + str(dim) + "/" + str(type_instance) + "/"
 
-    name_file_result = "Test_" + type_strategy + "_" + type_problem + "_N_" + str(N) + "_t_" + str(
-        type_instance) + "_lambda_" + str(lambda_) + "_beta_" + str(beta) + "_nb_train_" + str(
-        nb_train) + "_n_G_" + "_L_" + str(numberHiddenLayersG) + "_nh_" + str(nh)  + "_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_" + str(seed) + ".txt"
-
 
     # Chargement des instances QUBO
     if (type_problem == "QUBO"):
@@ -104,7 +111,7 @@ if __name__ == '__main__':
         instance_path = "instances/QUBO/"
         tensor_Q_test = getTensorInstances_QUBO(instance_path, nb_instances_test, nb_restarts, N, type_instance, device,
                                                 "test")
-        numberHiddenLayersG = 1
+        
 
     # Chargement des instances NK
     elif (type_problem == "NK"):
@@ -131,19 +138,35 @@ if __name__ == '__main__':
 
         tensor_matrix_locus, tensor_matrix_contrib, tensor_Q_test = getTensorInstances_NK("instances/nk3/" + str(dim) + "/" + str(type_instance) + "/", nb_instances_test, nb_restarts, lambda_, dim, D, type_instance, device)
 
+    if (type_problem == "NK3"):
+        dim_variables = [3 for i in range(N)] 
+    elif (type_problem == "NK"):
+        dim_variables = [2 for i in range(N)]      
+    elif (type_problem == "QUBO"):
+        dim_variables = [2 for i in range(N)]
+
+
+    if(nh == -1):
+        nh = N
+
+    if(numberHiddenLayersG == -1):
+        numberHiddenLayersG = int(max(0,math.log2(N)  + max(dim_variables) - 8))
+
+
+    name_file_result = "Test_" + type_strategy + "_" + type_problem + "_N_" + str(N) + "_t_" + str(
+        type_instance) + "_lambda_" + str(lambda_) + "_beta_" + str(beta) + "_nb_train_" + str(
+        nb_train)  + "_L_" + str(numberHiddenLayersG) + "_nh_" + str(nh) + "_activation_" + str(activation)  + "_" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + "_" + str(seed) + ".txt"
+
 
 
     # Création de l'EDA
     factory = FactoryStrategyEA()
     
     
-    if (type_problem == "NK3"):
-        dim_variables = [3 for i in range(N)]      
-    else:
-        dim_variables = None
+
         
     strategy = factory.createStrategyEA(typeStrategy, dim, lambda_, mu, rho, beta, device, numberHiddenLayersG, nh,
-                                         nb_train, epsilon, learning_rate, dim_variables)
+                                         nb_train, epsilon, learning_rate, dim_variables, activation)
 
 
     # Lancement des (nb_instances * nb_restarts) runs

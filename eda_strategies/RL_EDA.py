@@ -13,12 +13,13 @@ import copy
 
 class RL_EDA(Abstract_EDA):
 
-    def __init__(self, N,  lambda_,  beta,  device,  numberHiddenLayersG, nh,    nb_train, epsilon, learning_rate, dim_variables):
+    def __init__(self, N,  lambda_,  beta,  device,  numberHiddenLayersG, nh,    nb_train, epsilon, learning_rate, dim_variables, activation):
 
         Abstract_EDA.__init__(self, N, lambda_, device)
 
         self.numberHiddenLayersG = numberHiddenLayersG
         self.nh = nh
+        self.activation = activation
         self.nb_train = nb_train
         self.lambda_ = lambda_
         self.epsilon = epsilon
@@ -49,7 +50,7 @@ class RL_EDA(Abstract_EDA):
         self.orderGenerator = OrderGenerator(self.device,  nb_runs, self.lambda_, self.N).to(self.device)
         
         # Initializing value generator 
-        self.generator = RL_EDA_generator((self.nb_runs, self.lambda_, self.N), self.nh,self.lambda_,numberHiddenLayersG=self.numberHiddenLayersG, device=self.device, cat_sizes= self.dim_variables).to(self.device)
+        self.generator = RL_EDA_generator((self.nb_runs, self.lambda_, self.N), self.nh,self.lambda_,numberHiddenLayersG=self.numberHiddenLayersG, device=self.device, cat_sizes= self.dim_variables, activation=self.activation).to(self.device)
         
         self.generator.reset_parameters()
 
@@ -213,8 +214,7 @@ class RL_EDA(Abstract_EDA):
                                             torch.distributions.bernoulli.Bernoulli(probs=probas_g)).mean()
                                 
                 
-            #d_kl = kl_divergence(torch.distributions.bernoulli.Bernoulli(probs=init_distributions.data),torch.distributions.bernoulli.Bernoulli(probs=probas_g)).mean()
-            
+
             
             ## Calculating the global loss 
             global_loss = torch.mean(weighted_loss)  + self.beta * d_kl

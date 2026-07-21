@@ -10,7 +10,7 @@ from eda_strategies.RL_EDA import RL_EDA
 class FactoryStrategyEA:
 
 
-    def createStrategyEA(self, typeStrategy, N, lambda_, mu, rho, beta, device,  numberHiddenLayersG, nh, nb_train, epsilon, learning_rate, dim_variables):
+    def createStrategyEA(self, typeStrategy, N, lambda_, mu, rho, beta, device,  numberHiddenLayersG, nh, nb_train, epsilon, learning_rate, dim_variables, activation):
 
         if (typeStrategy == "UMDA"):
             return UMDA(N, lambda_, mu, device)
@@ -24,4 +24,4 @@ class FactoryStrategyEA:
             
             print("OK")
 
-            return RL_EDA(N,  lambda_, beta, device, numberHiddenLayersG, nh, nb_train,  epsilon, learning_rate, dim_variables)
+            return RL_EDA(N,  lambda_, beta, device, numberHiddenLayersG, nh, nb_train,  epsilon, learning_rate, dim_variables, activation)
