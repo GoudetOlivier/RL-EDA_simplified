@@ -1,4 +1,5 @@
-# Black-Box Combinatorial Optimization with Order-Invariant Reinforcement Learning. Replication code and additional results.
+# Simplified and faster version of RL-EDA algorithm 
+
 
 
 To launch the algorithm enter the source_code repo.
@@ -32,18 +33,3 @@ To run the MIMIC algorithm on the same instance the command line is
 python main_baseline_edas.py MIMIC QUBO 128 0
 
 
-## Nasbench dataset
-
-Install first BBO-DOB with the following lines :
-
-git clone https://github.com/e5120/BB-DOB
-cd BB-DOB
-pip install -r requirements.txt
-pip install -e .
-
-Download nasbench data here : https://github.com/google-research/nasbench
-Install the library with the following lines :
-
-git clone https://github.com/google-research/nasbench
-cd nasbench
-pip install -e .
