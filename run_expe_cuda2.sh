@@ -10,7 +10,7 @@ for nh in -1; do
 for numberHiddenLayersG in -1 ; do
 
 
-python main_rl_eda.py $pb $N $K --verbose --device cuda:2 --numberHiddenLayersG $numberHiddenLayersG --nh $nh --activation $activation
+python main_rl_eda.py $pb $N $K --verbose --device cuda:2 --numberHiddenLayersG $numberHiddenLayersG --nh $nh --activation $activation 
 
 done
 done

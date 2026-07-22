@@ -2,23 +2,8 @@ import math
 import torch
 from torch.nn import Parameter
 import numpy as np
-from torch.nn.modules.batchnorm import _BatchNorm
 
-class ChannelBatchNorm1d(_BatchNorm):
-    def __init__(self, num_channels, num_features, *args, **kwargs):
-        super(ChannelBatchNorm1d, self).__init__(num_channels*num_features, *args, **kwargs)
-        self.num_channels = num_channels
-        self.num_features = num_features
 
-    def _check_input_dim(self, input):
-        if input.dim() != 2 and input.dim() != 3:
-            raise ValueError('expected 2D or 3D input (got {}D input)'
-                             .format(input.dim()))
-
-    def forward(self, input):
-        _input = input.contiguous().view(-1, self.num_channels * self.num_features)
-        output = super(ChannelBatchNorm1d, self).forward(_input)
-        return torch.transpose(output.view(-1, self.num_channels, self.num_features), 0, 1)
 
 
 class OrderGenerator(torch.nn.Module):
@@ -148,7 +133,6 @@ class RL_EDA_generator(torch.nn.Module):
         if cat_sizes is not None:
             self.tensor_index_variables = index_variables.unsqueeze(0).unsqueeze(0).unsqueeze(3).unsqueeze(4).repeat([data_shape[0],size_pop,1,1,self.max_cat_size])
         else:
-
             self.tensor_index_variables = index_variables.unsqueeze(0).unsqueeze(0).repeat(
                 [data_shape[0], size_pop, 1]).unsqueeze(3)
 
@@ -157,16 +141,10 @@ class RL_EDA_generator(torch.nn.Module):
         self.list_input_layer.append(LinearCustom(data_shape[0], nb_vars, size_data_input, nh, size_pop))
 
 
-        self.list_hidden_layer = []
-
-        print("numberHiddenLayersG")
-        print(numberHiddenLayersG)
-
-        #self.list_hidden_layer = torch.nn.ModuleList()        
-
+        self.list_hidden_layer = []     
         for i in range(numberHiddenLayersG):
             self.list_hidden_layer.append(LinearCustom(data_shape[0], nb_vars, nh, nh, size_pop))
-            #self.list_batch_norm.append(ChannelBatchNorm1d(data_shape[0],  nh))
+
 
 
         self.output_layer = LinearCustom(data_shape[0], nb_vars, nh, output_dim, size_pop)
@@ -182,7 +160,7 @@ class RL_EDA_generator(torch.nn.Module):
                 data_input_tmp = torch.nn.functional.one_hot(data.long(), self.max_cat_size).float() * 2 -1
                 data_input = data_input_tmp * mask_input.unsqueeze(3)
                 data_input = data_input.view(data_input.size()[0], data_input.size()[1], -1)
-                
+
             else:
             
                 data_input = (data  * 2 - 1)* mask_input
@@ -253,7 +231,6 @@ class RL_EDA_generator(torch.nn.Module):
 
     def reset_parameters(self):
 
-        #self.input_layer.reset_parameters()
 
         self.list_input_layer[0].reset_parameters()
         self.list_input_layer[0].to(self.device)
