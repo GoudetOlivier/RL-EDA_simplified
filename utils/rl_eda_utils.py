@@ -136,17 +136,16 @@ class RL_EDA_generator(torch.nn.Module):
             self.tensor_index_variables = index_variables.unsqueeze(0).unsqueeze(0).repeat(
                 [data_shape[0], size_pop, 1]).unsqueeze(3)
 
-
+        # These layers are not trained
         self.list_input_layer = []
         self.list_input_layer.append(LinearCustom(data_shape[0], nb_vars, size_data_input, nh, size_pop))
-
 
         self.list_hidden_layer = []     
         for i in range(numberHiddenLayersG):
             self.list_hidden_layer.append(LinearCustom(data_shape[0], nb_vars, nh, nh, size_pop))
 
 
-
+        # Only the last layer is trained
         self.output_layer = LinearCustom(data_shape[0], nb_vars, nh, output_dim, size_pop)
 
 
