@@ -43,12 +43,13 @@ if __name__ == '__main__':
     parser.add_argument('--epsilon', type=float, default=0.001, help='probability threshold')
 
 
-
-
     # RL options
     parser.add_argument('--beta', type=float, default=1, help='beta : KL coefficient')
     parser.add_argument('--nb_train', type=int, default=50, help='nb epoch training at each iteration')
     parser.add_argument('--learning_rate', type=int, default=0.001, help='learning rate optimizer')
+
+
+
 
     # UMDA and PBIL parameters
     parser.add_argument('--mu', type=int, default=3, help='mu parameter for UMDA and PBIL algorithms')

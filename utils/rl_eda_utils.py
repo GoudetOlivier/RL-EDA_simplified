@@ -64,13 +64,11 @@ class LinearCustom(torch.nn.Module):
     def forward(self, data, order_variable=None):
 
 
-
         if (order_variable is not None):
             output = data @ self.weight
             output = (output + self.bias.unsqueeze(1)).squeeze(-1)
 
         else:
-
             output = data @ self.weight.unsqueeze(1)
             output = (output + self.bias.unsqueeze(1).unsqueeze(1)).squeeze(-1)
 
@@ -93,7 +91,6 @@ class RL_EDA_generator(torch.nn.Module):
         """Init the model."""
         super(RL_EDA_generator, self).__init__()
 
-
         self.size_pop = size_pop
 
         nb_vars = data_shape[2]
@@ -112,35 +109,25 @@ class RL_EDA_generator(torch.nn.Module):
 
         self.sizes = cat_sizes
 
-        if cat_sizes is not None:
-
-            self.max_cat_size = max(cat_sizes)
-            size_data_input = self.max_cat_size * self.nb_vars
-            output_dim = self.max_cat_size
-
-        else:
-            output_dim = 1
-            size_data_input = nb_vars
+        self.max_cat_size = max(cat_sizes)
+        size_data_input = self.max_cat_size * self.nb_vars
+        output_dim = self.max_cat_size
 
         self.device = device
-
-
-
 
         output_dim = output_dim * nb_vars
         index_variables = torch.arange(nb_vars).to(device)
 
-        if cat_sizes is not None:
-            self.tensor_index_variables = index_variables.unsqueeze(0).unsqueeze(0).unsqueeze(3).unsqueeze(4).repeat([data_shape[0],size_pop,1,1,self.max_cat_size])
-        else:
-            self.tensor_index_variables = index_variables.unsqueeze(0).unsqueeze(0).repeat(
-                [data_shape[0], size_pop, 1]).unsqueeze(3)
+        self.tensor_index_variables = index_variables.unsqueeze(0).unsqueeze(0).unsqueeze(3).unsqueeze(4).repeat([data_shape[0],size_pop,1,1,self.max_cat_size])
+
 
         # These layers are not trained
+        #self.list_input_layer = torch.nn.ModuleList()
         self.list_input_layer = []
         self.list_input_layer.append(LinearCustom(data_shape[0], nb_vars, size_data_input, nh, size_pop))
 
-        self.list_hidden_layer = []     
+        # self.list_hidden_layer = torch.nn.ModuleList()
+        self.list_hidden_layer = []
         for i in range(numberHiddenLayersG):
             self.list_hidden_layer.append(LinearCustom(data_shape[0], nb_vars, nh, nh, size_pop))
 
@@ -150,20 +137,13 @@ class RL_EDA_generator(torch.nn.Module):
 
 
 
-    def forward(self, data, mask_input, mask_output, order_variables=None):
+    def forward(self, data, mask_input , order_variables=None):
 
         if (order_variables is not None):
 
-            if self.sizes is not None:
-
-                data_input_tmp = torch.nn.functional.one_hot(data.long(), self.max_cat_size).float() * 2 -1
-                data_input = data_input_tmp * mask_input.unsqueeze(3)
-                data_input = data_input.view(data_input.size()[0], data_input.size()[1], -1)
-
-            else:
-            
-                data_input = (data  * 2 - 1)* mask_input
-
+            data_input_tmp = torch.nn.functional.one_hot(data.long(), self.max_cat_size).float() * 2 -1
+            data_input = data_input_tmp * mask_input.unsqueeze(3)
+            data_input = data_input.view(data_input.size()[0], data_input.size()[1], -1)
 
             out = self.list_input_layer[0](data_input, order_variables)
             out = self.activation(out)
@@ -174,29 +154,16 @@ class RL_EDA_generator(torch.nn.Module):
 
             output = self.output_layer(out, order_variables)
 
-
-            if self.sizes is not None:
-                output = output.view(self.batch_size,self.size_pop,self.nb_vars,  self.max_cat_size)
-                output = torch.gather(output, 2, order_variables.unsqueeze(2).unsqueeze(3).repeat([1,1,1,self.max_cat_size])).squeeze(2)
-            else:
-                output = torch.gather(output,2,order_variables.unsqueeze(2)).squeeze(-1)
+            output = output.view(self.batch_size,self.size_pop,self.nb_vars,  self.max_cat_size)
+            output = torch.gather(output, 2, order_variables.unsqueeze(2).unsqueeze(3).repeat([1,1,1,self.max_cat_size])).squeeze(2)
 
         else:
 
             data = data.unsqueeze(2).repeat(1, 1, self.nb_vars, 1)
-            
 
-            if self.sizes is not None:
-
-                data_input_tmp = torch.nn.functional.one_hot(data.long(), self.max_cat_size).float() * 2 -1
-                data_input = data_input_tmp * mask_input.unsqueeze(4)
-                data_input = data_input.view(data_input.size()[0], data_input.size()[1], data_input.size()[2], -1)
-
-            else:            
-            
-                data_input = (data  * 2 - 1)* mask_input
-
-            
+            data_input_tmp = torch.nn.functional.one_hot(data.long(), self.max_cat_size).float() * 2 -1
+            data_input = data_input_tmp * mask_input.unsqueeze(4)
+            data_input = data_input.view(data_input.size()[0], data_input.size()[1], data_input.size()[2], -1)
 
             out = self.list_input_layer[0](data_input)
             out = self.activation(out)
@@ -207,29 +174,14 @@ class RL_EDA_generator(torch.nn.Module):
 
             output = self.output_layer(out)
 
-            if self.sizes is not None:
+            output = output.view(self.batch_size, self.size_pop, self.nb_vars, self.nb_vars, self.max_cat_size)
+            output = torch.gather(output, 3, self.tensor_index_variables).squeeze(3)
 
-                output = output.view(self.batch_size, self.size_pop, self.nb_vars, self.nb_vars, self.max_cat_size)
-                output = torch.gather(output, 3, self.tensor_index_variables).squeeze(3)
-
-            else:
-                
-                output = torch.gather(output, 3, self.tensor_index_variables).squeeze(-1)
-
-        if self.sizes is not None:
-
-            if(mask_output  is not None):
-                output = output + mask_output
-
-            output = torch.softmax(output ,  -1)
-
-        else:
-            output = torch.sigmoid(output)
+        output = torch.softmax(output ,  -1)
 
         return output
 
     def reset_parameters(self):
-
 
         self.list_input_layer[0].reset_parameters()
         self.list_input_layer[0].to(self.device)
